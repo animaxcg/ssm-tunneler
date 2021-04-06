@@ -15,7 +15,7 @@ MacOS/Linux
 
 ```
 git clone https://github.com/animaxcg/ssm-tunneler.git
-cd ssm-tunnel-multier
+cd ssm-tunneler
 ./install.sh
 ```
 Windows
