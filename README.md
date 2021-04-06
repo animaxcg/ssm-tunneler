@@ -38,6 +38,10 @@ Example:
 ```
 ssm-tunneler i-adf1234567890adf 12.10.0.0/16 --dns
 ```
+
+This may prompt you for your password and the password of the ssm user on the doccker image.
+The password is `ssm`
+
 ## Stop:
 ```
 ssm-tunneler stop
