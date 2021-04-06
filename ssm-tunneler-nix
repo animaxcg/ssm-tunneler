@@ -1,5 +1,15 @@
 #!/bin/bash
 action=$(echo ${1}| awk '{print tolower($0)}')
+if [ "${action}" != "start" ] && [ "${action}" != "stop" ]; then
+    echo "Help:"
+    echo "Action required as first param. Valid Actions: start|stop:"
+    echo "example:"
+    echo ""
+    echo "    ssm-tunneler start targetId cidr"
+    echo ""
+    echo "Where targetId is an ec2 instanceId: i-adf1234567890adf"
+    echo "Where cidr is a cidr range: 12.10.0.0/16"
+fi
 target=${2}
 cidrRange=${3}
 shift
@@ -7,9 +17,9 @@ shift
 shift
 
 function isContainerRunning() {
-    container=$(docker container ls | grep ssm-tunneler | wc -l)
+    sshRunning=$(curl http://localhost:822/ 2>&1 | grep -i SSH | wc -l | tr -d " ")
     # echo "container: ${container}"
-    if [[ "${container}" != "0" ]]; then
+    if [[ "${sshRunning}" != "0" ]]; then
         echo "true"
     else
         echo "false"
@@ -17,11 +27,20 @@ function isContainerRunning() {
 }
 
 if [[ "${action}" == "start" ]]; then
+    ssm-tunneler stop
     echo "Starting"
     ## ensures only local connection (since insecure password)
     docker run -d -p 127.0.0.1:822:22 -v ~/.aws:/home/ssm/.aws --cap-add=NET_ADMIN --device /dev/net/tun:/dev/net/tun ssm-tunneler ${target} ${cidrRange}
     while [[ "$(isContainerRunning)" == "false" ]]; do echo "waiting for container" && sleep 5; done
-    sshuttle ${@} -r ssm@localhost:822 ${cidrRange}
+    knownHostsEntry=$(ssh-keyscan -p 822 -t ecdsa-sha2-nistp256 -H 127.0.0.1 2>/dev/null | sed "s/.*ecdsa-sha2-nistp256/[localhost]:822 ecdsa-sha2-nistp256/g")
+    numEntries=$(grep -F "${knownHostsEntry}" ~/.ssh/known_hosts | wc -l | tr -d " ")
+    if [[ "${numEntries}" != "0" ]]; then
+        line=$(grep -n -F "${knownHostsEntry}"  ~/.ssh/known_hosts | awk -F ":" '{print $1}')
+        #TODO: test on linux the "" may not work there
+        sed -i "" "${line}d" ~/.ssh/known_hosts
+    fi
+    echo ${knownHostsEntry} >> ~/.ssh/known_hosts
+    echo "ssm" | sshuttle ${@} -r ssm@localhost:822 ${cidrRange}
     # echo "Started"
 elif [[ "${action}" == "stop" ]]; then
     echo "Stopping"
