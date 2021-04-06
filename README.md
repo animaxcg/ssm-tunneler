@@ -26,13 +26,18 @@ cd ssm-tunnel-multi-platform
 Coming someday: pip installation
 
 # Usage:
-
+## Start:
 ```
-ssm-tunneler ${target} ${cidrRange}
+ssm-tunneler start ${target} ${cidrRange} ${sshuttle_additional_args}
 ```
 Where `target` is an instance ID and `cidrRange` is the desired cidr
 
 Example:
 ```
-ssm-tunneler i-adf1234567890adf 12.10.0.0/16
+ssm-tunneler i-adf1234567890adf 12.10.0.0/16 --dns
 ```
+## Stop:
+```
+ssm-tunneler stop
+```
+TODO: Make this be able to run multiple and the same time

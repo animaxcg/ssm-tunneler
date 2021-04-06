@@ -1,0 +1,40 @@
+#!/bin/bash
+action=$(echo ${1}| awk '{print tolower($0)}')
+target=${2}
+cidrRange=${3}
+shift
+shift
+shift
+
+function isContainerRunning() {
+    container=$(docker container ls | grep ssm-tunneler | wc -l)
+    # echo "container: ${container}"
+    if [[ "${container}" != "0" ]]; then
+        echo "true"
+    else
+        echo "false"
+    fi
+}
+
+if [[ "${action}" == "start" ]]; then
+    echo "Starting"
+    echo "docker run -p 822:22 -v ~/.aws:/home/ssm/.aws --cap-add=NET_ADMIN --device /dev/net/tun:/dev/net/tun ssm-tunneler ${target} ${cidrRange}"
+    docker run -d -p 822:22 -v ~/.aws:/home/ssm/.aws --cap-add=NET_ADMIN --device /dev/net/tun:/dev/net/tun ssm-tunneler ${target} ${cidrRange}
+    echo "did it start?"
+    while [[ "$(isContainerRunning)" == "false" ]]; do echo "waiting for container" && sleep 5; done
+    sshuttle ${@} -r ssm@localhost:822 ${cidrRange} &
+    # echo "Started"
+elif [[ "${action}" == "stop" ]]; then
+    echo "Stopping"
+    container=$(docker container ls | grep ssm-tunneler | awk '{print $1}')
+    if [ ! -z ${container} ]; then
+        docker kill ${container}
+    fi
+    sshuttlePids=($(ps -ef | grep "r ssm@localhost:822" | grep -v grep | grep -v -i python| awk '{print $2}' | tr "\n" " "))
+    for pid in "${sshuttlePids[@]}"
+    do
+        echo $pid
+        kill -9 ${pid}
+    done
+    echo "Stopped"
+fi
