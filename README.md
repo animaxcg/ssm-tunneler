@@ -14,15 +14,15 @@ Utilizes Docker and ssh tunneling ([sshuttle](https://github.com/sshuttle/sshutt
 MacOS/Linux
 
 ```
-git clone https://github.com/animaxcg/ssm-tunnel-multi-platform.git
-cd ssm-tunnel-multi-platform
+git clone https://github.com/animaxcg/ssm-tunneler.git
+cd ssm-tunnel-multier
 ./install.sh
 ```
 Windows
 in powershell (coming soon):
 ```
-git clone https://github.com/animaxcg/ssm-tunnel-multi-platform.git
-cd ssm-tunnel-multi-platform
+git clone https://github.com/animaxcg/ssm-tunneler.git
+cd ssm-tunneler
 ./install.ps1
 ```
 Coming someday: pip installation
