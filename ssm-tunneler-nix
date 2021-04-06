@@ -18,11 +18,10 @@ function isContainerRunning() {
 
 if [[ "${action}" == "start" ]]; then
     echo "Starting"
-    echo "docker run -p 822:22 -v ~/.aws:/home/ssm/.aws --cap-add=NET_ADMIN --device /dev/net/tun:/dev/net/tun ssm-tunneler ${target} ${cidrRange}"
-    docker run -d -p 822:22 -v ~/.aws:/home/ssm/.aws --cap-add=NET_ADMIN --device /dev/net/tun:/dev/net/tun ssm-tunneler ${target} ${cidrRange}
-    echo "did it start?"
+    ## ensures only local connection (since insecure password)
+    docker run -d -p 127.0.0.1:822:22 -v ~/.aws:/home/ssm/.aws --cap-add=NET_ADMIN --device /dev/net/tun:/dev/net/tun ssm-tunneler ${target} ${cidrRange}
     while [[ "$(isContainerRunning)" == "false" ]]; do echo "waiting for container" && sleep 5; done
-    sshuttle ${@} -r ssm@localhost:822 ${cidrRange} &
+    sshuttle ${@} -r ssm@localhost:822 ${cidrRange}
     # echo "Started"
 elif [[ "${action}" == "stop" ]]; then
     echo "Stopping"
