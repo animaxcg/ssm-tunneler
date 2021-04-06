@@ -56,9 +56,5 @@ RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2
     && aws --version \
     && session-manager-plugin --version
 
-# RUN mkdir -p /home/ssm/.ssh
-# COPY id_rsa /home/ssm/.ssh
-# COPY id_rsa.pub /home/ssm/.ssh
-# RUN sudo chmod 400 /home/ssm/.ssh/id_rsa.pub
-# RUN sudo chmod 400 /home/ssm/.ssh/id_rsa
+
 ENTRYPOINT [ "/entrypoint.sh" ]
