@@ -1,5 +1,7 @@
 ## This is a wrapper for the [ssm-tunnel](https://github.com/mludvig/aws-ssm-tools) that enables ssm-tunneling for all major OS's 
+# Problem:
 
+ssm tunneling is prefered method of connecting to AWS but no good solution exists for macos/windows
 
 # Goal:
 A method of ssm-tunneling compatable with all major OS's macos, Windows and Linux
