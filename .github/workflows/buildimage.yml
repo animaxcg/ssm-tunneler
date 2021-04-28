@@ -27,7 +27,7 @@ jobs:
         uses: docker/build-push-action@v2
         with:
           push: false
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/ssm-tunneler:latest
+          tags: animaxcg/ssm-tunneler:latest
       -
         name: Image digest
         run: echo ${{ steps.docker_build.outputs.digest }}
