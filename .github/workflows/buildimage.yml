@@ -5,9 +5,9 @@ on:
   - push
   - pull_request
 jobs:
+  environment: build
   docker:
     runs-on: ubuntu-latest
-    env: build
     steps:
       -
         name: Set up QEMU
