@@ -36,7 +36,8 @@ if [[ "${action}" == "start" ]]; then
     numEntries=$(grep -F "${knownHostsEntry}" ~/.ssh/known_hosts | wc -l | tr -d " ")
     if [[ "${numEntries}" != "0" ]]; then
         line=$(grep -n -F "${knownHostsEntry}"  ~/.ssh/known_hosts | awk -F ":" '{print $1}')
-        sed -i "${line}d" ~/.ssh/known_hosts
+        #TODO: test on linux the "" may not work there
+        sed -i "" "${line}d" ~/.ssh/known_hosts
     fi
     echo ${knownHostsEntry} >> ~/.ssh/known_hosts
     echo "ssm" | sshuttle ${@} -r ssm@localhost:822 ${cidrRange}
