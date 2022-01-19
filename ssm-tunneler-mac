@@ -57,9 +57,8 @@ EOF
     chmod 400 /tmp/temp
     az=$(aws ec2 describe-instances --instance-ids ${target} --query "Reservations[].Instances[].Placement.AvailabilityZone|[0]" --output text)
     aws ec2-instance-connect send-ssh-public-key --instance-id ${target} --availability-zone ${az} --instance-os-user ssm-user --ssh-public-key file:///tmp/temp.pub
-    ssh -i /tmp/temp -N -f -M -D 1080 ssm-user@${target} -o "UserKnownHostsFile=/dev/null" -o "StrictHostKeyChecking=no"
+    ssh -i /tmp/temp -N -f -M -D 1080 ssm-user@${target} -o "UserKnownHostsFile=/dev/null" -o "StrictHostKeyChecking=no" -o ProxyCommand="aws ssm start-session --target %h --document-name AWS-StartSSHSession --parameters portNumber=%p"
     ssh_pid=$(ps -ef | grep "ssh -i /tmp/temp" | grep -v grep | awk '{print $2}')
-    # rm temp*
 
     networksetup -setautoproxystate Wi-Fi off
     sleep 3
