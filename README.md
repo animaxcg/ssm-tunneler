@@ -31,7 +31,7 @@ Coming someday: pip installation
 
 ## Start macos:
 ```
-ssm-tunneler start ${target} ${cidrRange} ${sshuttle_additional_args}
+ssm-tunneler start ${target} ${ipRegex} {domainRegex}
 ```
 Where `target` is an instance ID and `cidrRange` is the desired cidr
 
