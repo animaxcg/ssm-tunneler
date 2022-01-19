@@ -5,54 +5,79 @@ if [ "${action}" != "start" ] && [ "${action}" != "stop" ]; then
     echo "Action required as first param. Valid Actions: start|stop:"
     echo "example:"
     echo ""
-    echo "    ssm-tunneler start targetId cidr"
+    echo "    ssm-tunneler start targetId ip_regex host_regex"
+    echo "    ssm-tunneler stop"
     echo ""
     echo "Where targetId is an ec2 instanceId: i-adf1234567890adf"
-    echo "Where cidr is a cidr range: 12.10.0.0/16"
+    echo "Where ip_regex is a ip_regex 12.10 == cidr range: 12.10.0.0/16"
+    echo "Where ip_regex is a host_regex amazonaws.com == *.amazonaws.com"
+    exit 1
 fi
 target=${2}
-cidrRange=${3}
+ip=${3}
+url=${4}
+shift
 shift
 shift
 shift
 
-function isContainerRunning() {
-    sshRunning=$(nc -vz localhost 822 2>&1 | grep "succeeded!" | wc -l | tr -d " ")
-    # echo "container: ${container}"
-    if [[ "${sshRunning}" != "0" ]]; then
-        echo "true"
-    else
-        echo "false"
-    fi
+
+
+
+function stop() {
+    http_pid=$(ps -ef | grep "http.server 8000" | grep -v grep | awk '{print $2}')
+    ssh_pid=$(ps -ef | grep "ssh -i /tmp/temp" | grep -v grep | awk '{print $2}')
+    networksetup -setautoproxystate Wi-Fi off
+    kill -9 ${http_pid} ${ssh_pid}
+    rm -rf /tmp/webserver/
+    chmod 666 /tmp/temp
+    rm -rf /tmp/temp
+}
+function start() {
+    stop
+    mkdir -p /tmp/webserver/
+    rm -f /tmp/webserver/aws.pac
+    cat << EOF > /tmp/webserver/aws.pac
+function FindProxyForURL(url, host) {
+    proxy = "SOCKS localhost:1080; SOCKS5 localhost:1080";
+    alert("url: " + url + ", host: " + host);
+    if (shExpMatch(host, "${ip}.*") ||
+    shExpMatch(host, "*.${url}")) {
+        return proxy;
+    }
+    return "DIRECT";
+}
+EOF
+    cat /tmp/webserver/aws.pac
+    cd /tmp/webserver/
+    nohup python3 -m http.server 8000 --bind 127.0.0.1 &
+    http_pid=$(ps -ef | grep "http.server 8000" | grep -v grep | awk '{print $2}')
+    echo pid: ${http_pid}
+    ssh-keygen -t rsa -f /tmp/temp -N ''
+    chmod 400 /tmp/temp
+    az=$(aws ec2 describe-instances --instance-ids ${target} --query "Reservations[].Instances[].Placement.AvailabilityZone|[0]" --output text)
+    aws ec2-instance-connect send-ssh-public-key --instance-id ${target} --availability-zone ${az} --instance-os-user ssm-user --ssh-public-key file:///tmp/temp.pub
+    ssh -i /tmp/temp -N -f -M -D 1080 ssm-user@${target} -o "UserKnownHostsFile=/dev/null" -o "StrictHostKeyChecking=no"
+    ssh_pid=$(ps -ef | grep "ssh -i /tmp/temp" | grep -v grep | awk '{print $2}')
+    # rm temp*
+
+    networksetup -setautoproxystate Wi-Fi off
+    sleep 3
+    networksetup -setautoproxyurl Wi-Fi http://localhost:8000/aws.pac
+    networksetup -setautoproxystate Wi-Fi on
+    read -rsn1 -p "Press any key to close session."; echo
+    networksetup -setautoproxystate Wi-Fi off
+    kill -9 ${http_pid} ${ssh_pid}
+    rm -rf /tmp/webserver/
+    chmod 666 /tmp/temp
+    rm -rf /tmp/temp
 }
 
-if [[ "${action}" == "start" ]]; then
-    ssm-tunneler stop
-    echo "Starting"
-    ## ensures only local connection (since insecure password)
-    docker run -d -p 127.0.0.1:822:22 -m 6g -v ~/.aws:/home/ssm/.aws --cap-add=NET_ADMIN --device /dev/net/tun:/dev/net/tun animaxcg/ssm-tunneler ${target} ${cidrRange}
-    while [[ "$(isContainerRunning)" == "false" ]]; do echo "waiting for container" && sleep 5; done
-    knownHostsEntry=$(ssh-keyscan -p 822 -t ecdsa-sha2-nistp256 -H 127.0.0.1 2>/dev/null | sed "s/.*ecdsa-sha2-nistp256/[localhost]:822 ecdsa-sha2-nistp256/g")
-    numEntries=$(grep -F "${knownHostsEntry}" ~/.ssh/known_hosts | wc -l | tr -d " ")
-    if [[ "${numEntries}" != "0" ]]; then
-        line=$(grep -n -F "${knownHostsEntry}"  ~/.ssh/known_hosts | awk -F ":" '{print $1}')
-        #TODO: test on linux the "" may not work there
-        sed -i "" "${line}d" ~/.ssh/known_hosts
-    fi
-    echo ${knownHostsEntry} >> ~/.ssh/known_hosts
-    echo "ssm" | sshuttle ${@} -r ssm@localhost:822 ${cidrRange}
-    # echo "Started"
-elif [[ "${action}" == "stop" ]]; then
-    echo "Stopping"
-    container=$(docker container ls | grep ssm-tunneler | awk '{print $1}')
-    if [ ! -z ${container} ]; then
-        docker kill ${container}
-    fi
-    sshuttlePids=($(ps -ef | grep "r ssm@localhost:822" | grep -v grep | grep -v -i python| awk '{print $2}' | tr "\n" " "))
-    for pid in "${sshuttlePids[@]}"
-    do
-        echo $pid
-        kill -9 ${pid}
-    done
-    echo "Stopped"
+
+if [[ "${action}" == "stop" ]]
+then
+    stop
+elif [[ "${action}" == "start" ]]
+then 
+    start
 fi
