@@ -7,6 +7,10 @@ ssm tunneling is prefered method of connecting to AWS but no good solution exist
 A method of ssm-tunneling compatable with all major OS's macos, Windows and Linux
 
 # Method:
+## macos
+Utilizes aws cli ssm, ssh, python3 http server, and macos proxy to proxy entire cidr/ip range to your host in one command. the python server only runs loopback so as not to expose open ports externally
+
+## Linux/WSL
 Utilizes Docker and ssh tunneling ([sshuttle](https://github.com/sshuttle/sshuttle)) to a local docker container to than tunnel via [ssm-tunnel](https://github.com/mludvig/aws-ssm-tools) to AWS via ssm-tunnel
 
 # Installation:
@@ -40,7 +44,7 @@ Example:
 ssm-tunneler i-adf1234567890adf 12.10 amazonaws.com
 ```
 
-## Start Unix/WSL:
+## Start Linux/WSL:
 ```
 ssm-tunneler start ${target} ${cidrRange} ${sshuttle_additional_args}
 ```
