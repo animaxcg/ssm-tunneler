@@ -29,6 +29,7 @@ RUN mkdir /var/run/sshd
 RUN bash -c 'install -m755 <(printf "#!/bin/sh\nexit 0") /usr/sbin/policy-rc.d'
 RUN ex +'%s/^#\zeListenAddress/\1/g' -scwq /etc/ssh/sshd_config
 RUN ex +'%s/^#\zeHostKey .*ssh_host_.*_key/\1/g' -scwq /etc/ssh/sshd_config
+RUN sed -i "s/^#.*IdentityFile ~\/.ssh\/id_rsa/IdentityFile ~\/.ssh\/id_rsa/g" /etc/ssh/ssh_config
 RUN RUNLEVEL=1 dpkg-reconfigure openssh-server
 RUN ssh-keygen -A -v
 RUN update-rc.d ssh defaults

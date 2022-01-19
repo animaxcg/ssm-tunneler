@@ -28,7 +28,19 @@ cd ssm-tunneler
 Coming someday: pip installation
 
 # Usage:
-## Start:
+
+## Start macos:
+```
+ssm-tunneler start ${target} ${cidrRange} ${sshuttle_additional_args}
+```
+Where `target` is an instance ID and `cidrRange` is the desired cidr
+
+Example:
+```
+ssm-tunneler i-adf1234567890adf 12.10 amazonaws.com
+```
+
+## Start Unix/WSL:
 ```
 ssm-tunneler start ${target} ${cidrRange} ${sshuttle_additional_args}
 ```
