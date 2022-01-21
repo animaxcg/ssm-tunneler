@@ -30,6 +30,7 @@ if [[ "${action}" == "start" ]]; then
     ssm-tunneler stop
     echo "Starting"
     ## ensures only local connection (since insecure password)
+    docker network ls | grep -- ssm-tunneler-network || docker network create ssm-tunneler-network
     docker run -d -p 127.0.0.1:822:22 -m 6g -v ~/.aws:/home/ssm/.aws --cap-add=NET_ADMIN --device /dev/net/tun:/dev/net/tun animaxcg/ssm-tunneler ${target} ${cidrRange}
     while [[ "$(isContainerRunning)" == "false" ]]; do echo "waiting for container" && sleep 5; done
     knownHostsEntry=$(ssh-keyscan -p 822 -t ecdsa-sha2-nistp256 -H 127.0.0.1 2>/dev/null | sed "s/.*ecdsa-sha2-nistp256/[localhost]:822 ecdsa-sha2-nistp256/g")
